@@ -47,6 +47,7 @@ export const setAppTargetTone = async (
       toneId,
       iconPath: existing.iconPath ?? null,
       pasteKeybind: existing.pasteKeybind ?? null,
+      simulatedTyping: existing.simulatedTyping ?? false,
     });
   } catch (error) {
     console.error("Failed to update app target tone", error);
@@ -75,6 +76,7 @@ export const setAppTargetPasteKeybind = async (
       toneId: existing.toneId ?? null,
       iconPath: existing.iconPath ?? null,
       pasteKeybind,
+      simulatedTyping: existing.simulatedTyping ?? false,
     });
   } catch (error) {
     console.error("Failed to update app target paste keybind", error);
@@ -82,6 +84,35 @@ export const setAppTargetPasteKeybind = async (
       error instanceof Error
         ? error.message
         : "Failed to update app target paste keybind.",
+    );
+  }
+};
+
+export const setAppTargetSimulatedTyping = async (
+  id: string,
+  simulatedTyping: boolean,
+): Promise<void> => {
+  const existing = getAppState().appTargetById[id];
+  if (!existing) {
+    showErrorSnackbar("App target is not registered.");
+    return;
+  }
+
+  try {
+    await upsertAppTarget({
+      id,
+      name: existing.name,
+      toneId: existing.toneId ?? null,
+      iconPath: existing.iconPath ?? null,
+      pasteKeybind: existing.pasteKeybind ?? null,
+      simulatedTyping,
+    });
+  } catch (error) {
+    console.error("Failed to update app target simulated typing", error);
+    showErrorSnackbar(
+      error instanceof Error
+        ? error.message
+        : "Failed to update app target simulated typing.",
     );
   }
 };
@@ -128,6 +159,7 @@ export const tryRegisterCurrentAppTarget = async (): Promise<
           toneId: existingApp?.toneId ?? null,
           iconPath: iconPath ?? existingApp?.iconPath ?? null,
           pasteKeybind: existingApp?.pasteKeybind ?? null,
+          simulatedTyping: existingApp?.simulatedTyping ?? false,
         });
       });
     } catch (error) {

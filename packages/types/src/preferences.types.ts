@@ -29,6 +29,7 @@ export type UserPreferences = {
   incognitoModeEnabled: boolean;
   incognitoModeIncludeInStats: boolean;
   dictationPillVisibility: DictationPillVisibility;
+  simulatedTypingEnabled: boolean;
 
   // deprecated
   isEnterprise: boolean;

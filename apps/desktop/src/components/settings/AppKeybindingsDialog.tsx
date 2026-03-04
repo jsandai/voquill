@@ -9,12 +9,16 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
+  Switch,
   Typography,
 } from "@mui/material";
-import { useMemo } from "react";
+import { ChangeEvent, useMemo } from "react";
 import { AppTarget } from "@repo/types";
 import { FormattedMessage, useIntl } from "react-intl";
-import { setAppTargetPasteKeybind } from "../../actions/app-target.actions";
+import {
+  setAppTargetPasteKeybind,
+  setAppTargetSimulatedTyping,
+} from "../../actions/app-target.actions";
 import { produceAppState, useAppStore } from "../../store";
 import { StorageImage } from "../common/StorageImage";
 
@@ -39,11 +43,11 @@ export const AppKeybindingsDialog = () => {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        <FormattedMessage defaultMessage="App Paste Bindings" />
+        <FormattedMessage defaultMessage="Per-App Settings" />
       </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          <FormattedMessage defaultMessage="Different applications use different keyboard shortcuts for pasting. Select the keybind that works best for each app." />
+          <FormattedMessage defaultMessage="Configure paste keybinds and simulated typing per application. Enable simulated typing for remote desktop apps like RustDesk." />
         </Typography>
         {sortedTargets.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
@@ -54,14 +58,20 @@ export const AppKeybindingsDialog = () => {
             <Stack
               direction="row"
               justifyContent="space-between"
+              alignItems="center"
               sx={{ px: 1, mb: 1 }}
             >
               <Typography variant="caption" color="text.secondary">
                 <FormattedMessage defaultMessage="App" />
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                <FormattedMessage defaultMessage="Paste keybind" />
-              </Typography>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80, textAlign: "center" }}>
+                  <FormattedMessage defaultMessage="Sim. typing" />
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 170 }}>
+                  <FormattedMessage defaultMessage="Paste keybind" />
+                </Typography>
+              </Stack>
             </Stack>
             {sortedTargets.map((target) => (
               <AppKeybindingRow key={target.id} target={target} />
@@ -86,9 +96,13 @@ const AppKeybindingRow = ({ target }: AppKeybindingRowProps) => {
   const intl = useIntl();
   const pasteKeybindValue = target.pasteKeybind ?? "ctrl+v";
 
-  const handleChange = (event: SelectChangeEvent<string>) => {
+  const handleKeybindChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     void setAppTargetPasteKeybind(target.id, value === "ctrl+v" ? null : value);
+  };
+
+  const handleSimulatedTypingChange = (event: ChangeEvent<HTMLInputElement>) => {
+    void setAppTargetSimulatedTyping(target.id, event.target.checked);
   };
 
   return (
@@ -131,20 +145,29 @@ const AppKeybindingRow = ({ target }: AppKeybindingRowProps) => {
           {target.name}
         </Typography>
       </Stack>
-      <Select
-        value={pasteKeybindValue}
-        onChange={handleChange}
-        size="small"
-        variant="outlined"
-        sx={{ minWidth: 170, flexShrink: 0 }}
-      >
-        <MenuItem value="ctrl+v">
-          <FormattedMessage defaultMessage="Default (Ctrl+V)" />
-        </MenuItem>
-        <MenuItem value="ctrl+shift+v">
-          <FormattedMessage defaultMessage="Terminal (Ctrl+Shift+V)" />
-        </MenuItem>
-      </Select>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Box sx={{ minWidth: 80, display: "flex", justifyContent: "center" }}>
+          <Switch
+            size="small"
+            checked={target.simulatedTyping ?? false}
+            onChange={handleSimulatedTypingChange}
+          />
+        </Box>
+        <Select
+          value={pasteKeybindValue}
+          onChange={handleKeybindChange}
+          size="small"
+          variant="outlined"
+          sx={{ minWidth: 170, flexShrink: 0 }}
+        >
+          <MenuItem value="ctrl+v">
+            <FormattedMessage defaultMessage="Default (Ctrl+V)" />
+          </MenuItem>
+          <MenuItem value="ctrl+shift+v">
+            <FormattedMessage defaultMessage="Terminal (Ctrl+Shift+V)" />
+          </MenuItem>
+        </Select>
+      </Stack>
     </Stack>
   );
 };
