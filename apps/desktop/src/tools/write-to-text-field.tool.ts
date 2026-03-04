@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { z } from "zod";
 import type { ToolResult } from "../types/agent.types";
+import { getAppState } from "../store";
+import { getMyUserPreferences } from "../utils/user.utils";
 import { BaseTool } from "./base.tool";
 import type { DraftTool } from "./draft.tool";
 import { StopTool } from "./stop.tool";
@@ -24,11 +26,16 @@ export class WriteToTextFieldTool extends BaseTool<
   readonly outputSchema = WriteToTextFieldOutputSchema;
 
   private pasteKeybind: string | null = null;
+  private perAppSimulatedTyping: boolean | null = null;
   private stopTool: StopTool | null = null;
   private draftTool: DraftTool | null = null;
 
   setPasteKeybind(keybind: string | null): void {
     this.pasteKeybind = keybind;
+  }
+
+  setPerAppSimulatedTyping(enabled: boolean | null): void {
+    this.perAppSimulatedTyping = enabled;
   }
 
   setStopTool(stopTool: StopTool): void {
@@ -62,7 +69,15 @@ export class WriteToTextFieldTool extends BaseTool<
       };
     }
 
-    await invoke("paste", { text: draft, keybind: this.pasteKeybind });
+    const state = getAppState();
+    const simulatedTyping =
+      this.perAppSimulatedTyping ||
+      (getMyUserPreferences(state)?.simulatedTypingEnabled ?? false);
+    await invoke("paste", {
+      text: draft,
+      keybind: this.pasteKeybind,
+      simulatedTyping,
+    });
     this.draftTool.clearDraft();
     this.stopTool?.stop();
 

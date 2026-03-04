@@ -21,6 +21,7 @@ import {
   setIgnoreUpdateDialog,
   setIncognitoModeEnabled,
   setIncognitoModeIncludeInStats,
+  setSimulatedTypingEnabled,
   setStylingMode,
 } from "../../actions/user.actions";
 import { produceAppState, useAppStore } from "../../store";
@@ -42,6 +43,7 @@ export const MoreSettingsDialog = () => {
     incognitoModeEnabled,
     incognitoIncludeInStats,
     dictationPillVisibility,
+    simulatedTypingEnabled,
     stylingMode,
     canChangeStylingMode,
   ] = useAppStore((state) => {
@@ -52,6 +54,7 @@ export const MoreSettingsDialog = () => {
       prefs?.incognitoModeEnabled ?? false,
       prefs?.incognitoModeIncludeInStats ?? false,
       getEffectivePillVisibility(prefs?.dictationPillVisibility),
+      prefs?.simulatedTypingEnabled ?? false,
       getEffectiveStylingMode(state),
       getAllowChangeStylingMode(state),
     ] as const;
@@ -85,6 +88,12 @@ export const MoreSettingsDialog = () => {
   ) => {
     const visibility = event.target.value as DictationPillVisibility;
     void setDictationPillVisibility(visibility);
+  };
+
+  const handleToggleSimulatedTyping = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    void setSimulatedTypingEnabled(event.target.checked);
   };
 
   const handleStylingModeChange = (event: SelectChangeEvent<string>) => {
@@ -184,6 +193,22 @@ export const MoreSettingsDialog = () => {
                   {intl.formatMessage({ defaultMessage: "Hidden" })}
                 </MenuItem>
               </Select>
+            }
+          />
+
+          <SettingSection
+            title={
+              <FormattedMessage defaultMessage="Simulated typing" />
+            }
+            description={
+              <FormattedMessage defaultMessage="Type characters individually instead of using clipboard paste. Enable this when using remote desktop software like RustDesk." />
+            }
+            action={
+              <Switch
+                edge="end"
+                checked={simulatedTypingEnabled}
+                onChange={handleToggleSimulatedTyping}
+              />
             }
           />
 

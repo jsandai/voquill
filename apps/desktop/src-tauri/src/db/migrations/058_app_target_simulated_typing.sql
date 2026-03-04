@@ -1,0 +1,1 @@
+ALTER TABLE app_targets ADD COLUMN simulated_typing INTEGER NOT NULL DEFAULT 0;

@@ -1,10 +1,11 @@
 use std::{env, mem, thread, time::Duration};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT,
-    KEYEVENTF_KEYUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, VIRTUAL_KEY,
-    VK_CONTROL, VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_RCONTROL, VK_RMENU,
-    VK_RSHIFT, VK_RWIN, VK_SHIFT, VK_V,
+    GetAsyncKeyState, MapVirtualKeyW, SendInput, VkKeyScanW, INPUT, INPUT_0, INPUT_KEYBOARD,
+    INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, MAP_VIRTUAL_KEY_TYPE,
+    MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, VIRTUAL_KEY, VK_CONTROL,
+    VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_RCONTROL, VK_RMENU, VK_RSHIFT,
+    VK_RWIN, VK_SHIFT, VK_V,
 };
 use windows::Win32::UI::WindowsAndMessaging::{GetClassNameW, GetForegroundWindow};
 
@@ -204,6 +205,77 @@ fn send_paste_keys(keybind: Option<&str>) {
             send_key_up(VK_SHIFT);
         }
         send_key_up(VK_CONTROL);
+    }
+}
+
+pub(crate) fn send_unicode_string(text: &str) {
+    release_modifier_keys();
+    thread::sleep(Duration::from_millis(30));
+
+    for c in text.chars() {
+        unsafe {
+            let vk_result = VkKeyScanW(c as u16);
+            if vk_result == -1 {
+                // Character has no virtual key mapping, skip it
+                continue;
+            }
+            let vk = VIRTUAL_KEY((vk_result & 0xFF) as u16);
+            let modifiers = (vk_result >> 8) & 0xFF;
+            let need_shift = modifiers & 1 != 0;
+            let need_ctrl = modifiers & 2 != 0;
+            let need_alt = modifiers & 4 != 0;
+            let scan = MapVirtualKeyW(vk.0 as u32, MAP_VIRTUAL_KEY_TYPE(0)) as u16;
+
+            // Press modifiers
+            if need_shift {
+                send_key_down(VK_SHIFT);
+            }
+            if need_ctrl {
+                send_key_down(VK_CONTROL);
+            }
+            if need_alt {
+                send_key_down(VK_MENU);
+            }
+
+            // Press and release the key using scan codes
+            let down = INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: vk,
+                        wScan: scan,
+                        dwFlags: KEYEVENTF_SCANCODE,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            };
+            let up = INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: vk,
+                        wScan: scan,
+                        dwFlags: KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            };
+            SendInput(&[down, up], mem::size_of::<INPUT>() as i32);
+
+            // Release modifiers
+            if need_alt {
+                send_key_up(VK_MENU);
+            }
+            if need_ctrl {
+                send_key_up(VK_CONTROL);
+            }
+            if need_shift {
+                send_key_up(VK_SHIFT);
+            }
+        }
+        thread::sleep(Duration::from_millis(10));
     }
 }
 

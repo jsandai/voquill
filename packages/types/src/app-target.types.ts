@@ -7,4 +7,5 @@ export type AppTarget = {
   toneId: Nullable<string>;
   iconPath: Nullable<string>;
   pasteKeybind: Nullable<string>;
+  simulatedTyping: boolean;
 };
