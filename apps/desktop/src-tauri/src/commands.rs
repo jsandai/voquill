@@ -62,6 +62,8 @@ pub struct AppTargetUpsertArgs {
     pub icon_path: Option<String>,
     #[serde(default)]
     pub paste_keybind: Option<String>,
+    #[serde(default)]
+    pub simulated_typing: bool,
 }
 
 #[derive(serde::Deserialize)]
@@ -279,6 +281,7 @@ pub async fn app_target_upsert(
         args.tone_id,
         args.icon_path,
         args.paste_keybind,
+        args.simulated_typing,
     )
     .await
     .map_err(|err| err.to_string())
@@ -1048,9 +1051,31 @@ pub fn restore_overlay_focus() {
 }
 
 #[tauri::command]
-pub async fn paste(text: String, keybind: Option<String>) -> Result<(), String> {
+pub async fn paste(
+    text: String,
+    keybind: Option<String>,
+    simulated_typing: Option<bool>,
+) -> Result<(), String> {
     let join_result = tauri::async_runtime::spawn_blocking(move || {
-        platform_paste_text(&text, keybind.as_deref())
+        if simulated_typing.unwrap_or(false) {
+            log::debug!(
+                "simulated typing: sending {} chars via SendInput",
+                text.chars().count()
+            );
+            #[cfg(target_os = "windows")]
+            {
+                crate::platform::windows::input::send_unicode_string(&text);
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                use enigo::{Enigo, KeyboardControllable};
+                let mut enigo = Enigo::new();
+                enigo.key_sequence(&text);
+            }
+            Ok(())
+        } else {
+            platform_paste_text(&text, keybind.as_deref())
+        }
     })
     .await;
 

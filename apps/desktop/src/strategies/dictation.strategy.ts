@@ -183,7 +183,11 @@ export class DictationStrategy extends BaseStrategy {
           );
 
           const textToPaste = transcript.trim() + " ";
-          await invoke<void>("paste", { text: textToPaste, keybind });
+          await invoke<void>("paste", {
+            text: textToPaste,
+            keybind,
+            simulatedTyping: currentApp?.simulatedTyping ?? false,
+          });
 
           getLogger().info("Transcript pasted successfully");
         } catch (error) {

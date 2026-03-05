@@ -12,4 +12,6 @@ pub struct AppTarget {
     pub icon_path: Option<String>,
     #[serde(default)]
     pub paste_keybind: Option<String>,
+    #[serde(default)]
+    pub simulated_typing: bool,
 }
