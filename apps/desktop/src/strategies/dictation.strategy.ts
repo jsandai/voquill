@@ -1,4 +1,4 @@
-import type { Nullable } from "@repo/types";
+import type { AppTarget, Nullable } from "@repo/types";
 import { invoke } from "@tauri-apps/api/core";
 import { showErrorSnackbar } from "../actions/app.actions";
 import { showToast } from "../actions/toast.actions";
@@ -28,6 +28,7 @@ export class DictationStrategy extends BaseStrategy {
   private streamingPostProcess = false;
   private streamingToneId: string | null = null;
   private pasteQueue: Promise<void> = Promise.resolve();
+  private streamingCurrentApp: AppTarget | null = null;
 
   shouldStoreTranscript(): boolean {
     return true;
@@ -35,6 +36,10 @@ export class DictationStrategy extends BaseStrategy {
 
   get hasStreamedSegments(): boolean {
     return this.streamedSegmentCount > 0;
+  }
+
+  setCurrentApp(app: AppTarget | null): void {
+    this.streamingCurrentApp = app;
   }
 
   configureStreamingPostProcess(toneId: string | null): void {
@@ -79,7 +84,7 @@ export class DictationStrategy extends BaseStrategy {
       this.streamedProcessedText += (isFirst ? "" : " ") + text;
 
       try {
-        await invoke<void>("paste", { text: textToPaste, keybind: null });
+        await invoke<void>("paste", { text: textToPaste, keybind: null, simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false });
       } catch (error) {
         getLogger().error(`Failed to paste interim segment: ${error}`);
       }
@@ -148,7 +153,7 @@ export class DictationStrategy extends BaseStrategy {
       if (this.hasStreamedSegments) {
         await this.pasteQueue;
         try {
-          await invoke<void>("paste", { text: " ", keybind: null });
+          await invoke<void>("paste", { text: " ", keybind: null, simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false });
         } catch {
           // Non-critical trailing space
         }

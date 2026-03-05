@@ -418,6 +418,10 @@ export const DictationSideEffects = () => {
           `Transcription prefs: mode=${transcriptPrefs.mode}`,
         );
         const session = createTranscriptionSession(transcriptPrefs);
+        if (strategy instanceof DictationStrategy) {
+          const startAppTarget = await tryRegisterCurrentAppTarget();
+          strategy.setCurrentApp(startAppTarget);
+        }
         if (
           session.setInterimResultCallback &&
           strategy instanceof DictationStrategy
