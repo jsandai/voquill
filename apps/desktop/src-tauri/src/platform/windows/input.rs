@@ -2,7 +2,8 @@ use std::{env, mem, thread, time::Duration};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, MapVirtualKeyW, SendInput, VkKeyScanW, INPUT, INPUT_0, INPUT_KEYBOARD,
-    INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, MAP_VIRTUAL_KEY_TYPE,
+    INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, KEYEVENTF_UNICODE,
+    MAP_VIRTUAL_KEY_TYPE,
     MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, VIRTUAL_KEY, VK_CONTROL,
     VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_RCONTROL, VK_RMENU, VK_RSHIFT,
     VK_RWIN, VK_SHIFT, VK_V,
@@ -216,7 +217,34 @@ pub(crate) fn send_unicode_string(text: &str) {
         unsafe {
             let vk_result = VkKeyScanW(c as u16);
             if vk_result == -1 {
-                // Character has no virtual key mapping, skip it
+                // No VK mapping (emoji, CJK, etc.) — fall back to KEYEVENTF_UNICODE
+                let code = c as u16;
+                let down = INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: VIRTUAL_KEY(0),
+                            wScan: code,
+                            dwFlags: KEYEVENTF_UNICODE,
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                };
+                let up = INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: VIRTUAL_KEY(0),
+                            wScan: code,
+                            dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                };
+                SendInput(&[down, up], mem::size_of::<INPUT>() as i32);
+                thread::sleep(Duration::from_millis(10));
                 continue;
             }
             let vk = VIRTUAL_KEY((vk_result & 0xFF) as u16);

@@ -1058,8 +1058,8 @@ pub async fn paste(
 ) -> Result<(), String> {
     let join_result = tauri::async_runtime::spawn_blocking(move || {
         if simulated_typing.unwrap_or(false) {
-            log::info!(
-                "simulated typing: sending {} chars via SendInput unicode",
+            log::debug!(
+                "simulated typing: sending {} chars via SendInput",
                 text.chars().count()
             );
             #[cfg(target_os = "windows")]
