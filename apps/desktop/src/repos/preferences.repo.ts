@@ -37,7 +37,6 @@ type LocalUserPreferences = {
   incognitoModeEnabled: boolean;
   incognitoModeIncludeInStats: boolean;
   dictationPillVisibility: DictationPillVisibility;
-  simulatedTypingEnabled: boolean;
   useNewBackend: boolean;
 };
 
@@ -84,7 +83,6 @@ const fromLocalPreferences = (
   dictationPillVisibility: getEffectivePillVisibility(
     preferences.dictationPillVisibility,
   ),
-  simulatedTypingEnabled: preferences.simulatedTypingEnabled ?? false,
 });
 
 const toLocalPreferences = (
@@ -118,7 +116,6 @@ const toLocalPreferences = (
   dictationPillVisibility: getEffectivePillVisibility(
     preferences.dictationPillVisibility,
   ),
-  simulatedTypingEnabled: preferences.simulatedTypingEnabled ?? false,
   useNewBackend: true,
 });
 

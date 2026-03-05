@@ -96,7 +96,6 @@ export const createDefaultPreferences = (): UserPreferences => ({
   incognitoModeEnabled: false,
   incognitoModeIncludeInStats: false,
   dictationPillVisibility: "while_active",
-  simulatedTypingEnabled: false,
 });
 
 export const updateUserPreferences = async (
@@ -529,14 +528,6 @@ export const setDictationPillVisibility = async (
   await updateUserPreferences((preferences) => {
     preferences.dictationPillVisibility = visibility;
   }, "Failed to save dictation pill visibility preference. Please try again.");
-};
-
-export const setSimulatedTypingEnabled = async (
-  enabled: boolean,
-): Promise<void> => {
-  await updateUserPreferences((preferences) => {
-    preferences.simulatedTypingEnabled = enabled;
-  }, "Failed to save simulated typing preference. Please try again.");
 };
 
 export const setStylingMode = async (

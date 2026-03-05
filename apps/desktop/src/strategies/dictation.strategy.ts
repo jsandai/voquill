@@ -20,7 +20,6 @@ import {
   applyReplacements,
   applySymbolConversions,
 } from "../utils/string.utils";
-import { getMyUserPreferences } from "../utils/user.utils";
 import { BaseStrategy } from "./base.strategy";
 
 export class DictationStrategy extends BaseStrategy {
@@ -115,13 +114,10 @@ export class DictationStrategy extends BaseStrategy {
 
           // Add a space to the end so you don't have to press space before your next dictation
           const textToPaste = transcript.trim() + " ";
-          const simulatedTyping =
-            currentApp?.simulatedTyping ||
-            (getMyUserPreferences(state)?.simulatedTypingEnabled ?? false);
           await invoke<void>("paste", {
             text: textToPaste,
             keybind,
-            simulatedTyping,
+            simulatedTyping: currentApp?.simulatedTyping ?? false,
           });
 
           getLogger().info("Transcript pasted successfully");

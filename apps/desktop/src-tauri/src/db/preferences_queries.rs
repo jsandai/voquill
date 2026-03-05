@@ -51,10 +51,9 @@ pub async fn upsert_user_preferences(
              incognito_mode_enabled,
              incognito_mode_include_in_stats,
              dictation_pill_visibility,
-             use_new_backend,
-             simulated_typing_enabled
+             use_new_backend
          )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29)
          ON CONFLICT(user_id) DO UPDATE SET
             transcription_mode = excluded.transcription_mode,
             transcription_api_key_id = excluded.transcription_api_key_id,
@@ -83,8 +82,7 @@ pub async fn upsert_user_preferences(
             incognito_mode_enabled = excluded.incognito_mode_enabled,
             incognito_mode_include_in_stats = excluded.incognito_mode_include_in_stats,
             dictation_pill_visibility = excluded.dictation_pill_visibility,
-            use_new_backend = excluded.use_new_backend,
-            simulated_typing_enabled = excluded.simulated_typing_enabled",
+            use_new_backend = excluded.use_new_backend",
     )
     .bind(&preferences.user_id)
     .bind(&preferences.transcription_mode)
@@ -115,7 +113,6 @@ pub async fn upsert_user_preferences(
     .bind(preferences.incognito_mode_include_in_stats)
     .bind(&preferences.dictation_pill_visibility)
     .bind(preferences.use_new_backend)
-    .bind(preferences.simulated_typing_enabled)
     .execute(&pool)
     .await?;
 
@@ -156,8 +153,7 @@ pub async fn fetch_user_preferences(
             incognito_mode_enabled,
             incognito_mode_include_in_stats,
             dictation_pill_visibility,
-            use_new_backend,
-            simulated_typing_enabled
+            use_new_backend
          FROM user_preferences
          WHERE user_id = ?1
          LIMIT 1",
@@ -258,10 +254,6 @@ pub async fn fetch_user_preferences(
             .unwrap_or_else(|_| "while_active".to_string()),
         use_new_backend: row
             .try_get::<i64, _>("use_new_backend")
-            .map(|v| v != 0)
-            .unwrap_or(false),
-        simulated_typing_enabled: row
-            .try_get::<i64, _>("simulated_typing_enabled")
             .map(|v| v != 0)
             .unwrap_or(false),
     });
