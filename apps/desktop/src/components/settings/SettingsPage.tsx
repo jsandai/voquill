@@ -262,7 +262,7 @@ export default function SettingsPage() {
       />
       {!isMacOS() && (
         <ListTile
-          title={<FormattedMessage defaultMessage="App paste bindings" />}
+          title={<FormattedMessage defaultMessage="Per-app settings" />}
           leading={<AppsOutlined />}
           onClick={openAppKeybindingsDialog}
         />

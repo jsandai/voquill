@@ -1,6 +1,7 @@
-import type { Nullable } from "@repo/types";
+import type { AppTarget, Nullable } from "@repo/types";
 import { invoke } from "@tauri-apps/api/core";
 import { showErrorSnackbar } from "../actions/app.actions";
+import { tryRegisterCurrentAppTarget } from "../actions/app-target.actions";
 import { showToast } from "../actions/toast.actions";
 import {
   postProcessTranscript,
@@ -28,6 +29,8 @@ export class DictationStrategy extends BaseStrategy {
   private streamingPostProcess = false;
   private streamingToneId: string | null = null;
   private pasteQueue: Promise<void> = Promise.resolve();
+  private resolvedCurrentApp: AppTarget | null = null;
+  private currentAppResolved = false;
 
   shouldStoreTranscript(): boolean {
     return true;
@@ -60,6 +63,15 @@ export class DictationStrategy extends BaseStrategy {
     this.streamedSegmentCount++;
 
     this.pasteQueue = this.pasteQueue.then(async () => {
+      if (!this.currentAppResolved) {
+        this.currentAppResolved = true;
+        try {
+          this.resolvedCurrentApp = await tryRegisterCurrentAppTarget() ?? null;
+        } catch {
+          // Non-critical — fall back to no simulated typing
+        }
+      }
+
       let text = sanitized;
 
       if (this.streamingPostProcess) {
@@ -79,7 +91,11 @@ export class DictationStrategy extends BaseStrategy {
       this.streamedProcessedText += (isFirst ? "" : " ") + text;
 
       try {
-        await invoke<void>("paste", { text: textToPaste, keybind: null });
+        await invoke<void>("paste", {
+          text: textToPaste,
+          keybind: null,
+          simulatedTyping: this.resolvedCurrentApp?.simulatedTyping ?? false,
+        });
       } catch (error) {
         getLogger().error(`Failed to paste interim segment: ${error}`);
       }
@@ -183,7 +199,11 @@ export class DictationStrategy extends BaseStrategy {
           );
 
           const textToPaste = transcript.trim() + " ";
-          await invoke<void>("paste", { text: textToPaste, keybind });
+          await invoke<void>("paste", {
+            text: textToPaste,
+            keybind,
+            simulatedTyping: currentApp?.simulatedTyping ?? false,
+          });
 
           getLogger().info("Transcript pasted successfully");
         } catch (error) {
