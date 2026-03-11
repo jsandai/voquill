@@ -24,11 +24,16 @@ export class WriteToTextFieldTool extends BaseTool<
   readonly outputSchema = WriteToTextFieldOutputSchema;
 
   private pasteKeybind: string | null = null;
+  private perAppSimulatedTyping: boolean | null = null;
   private stopTool: StopTool | null = null;
   private draftTool: DraftTool | null = null;
 
   setPasteKeybind(keybind: string | null): void {
     this.pasteKeybind = keybind;
+  }
+
+  setPerAppSimulatedTyping(enabled: boolean | null): void {
+    this.perAppSimulatedTyping = enabled;
   }
 
   setStopTool(stopTool: StopTool): void {
@@ -62,7 +67,11 @@ export class WriteToTextFieldTool extends BaseTool<
       };
     }
 
-    await invoke("paste", { text: draft, keybind: this.pasteKeybind });
+    await invoke("paste", {
+      text: draft,
+      keybind: this.pasteKeybind,
+      simulatedTyping: this.perAppSimulatedTyping ?? false,
+    });
     this.draftTool.clearDraft();
     this.stopTool?.stop();
 

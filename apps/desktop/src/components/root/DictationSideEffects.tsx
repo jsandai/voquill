@@ -420,6 +420,11 @@ export const DictationSideEffects = () => {
           `Created transcription session: ${session.constructor.name}`,
         );
 
+        if (strategy instanceof DictationStrategy) {
+          const startAppTarget = await tryRegisterCurrentAppTarget();
+          strategy.setCurrentApp(startAppTarget);
+        }
+
         tryPlayAudioChime("start_recording_clip");
         if (session.supportsStreaming()) {
           session.setInterimResultCallback((segment) => {

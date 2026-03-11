@@ -154,6 +154,9 @@ export class AgentStrategy extends BaseStrategy {
       this.writeToTextFieldTool?.setPasteKeybind(
         currentApp?.pasteKeybind ?? null,
       );
+      this.writeToTextFieldTool?.setPerAppSimulatedTyping(
+        currentApp?.simulatedTyping ?? null,
+      );
 
       this.uiMessages.push({ text: rawTranscript, sender: "me" });
       this.updateWindowState(this.uiMessages);
