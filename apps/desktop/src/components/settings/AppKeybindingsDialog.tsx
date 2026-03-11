@@ -158,6 +158,7 @@ const AppKeybindingRow = ({ target }: AppKeybindingRowProps) => {
           onChange={handleKeybindChange}
           size="small"
           variant="outlined"
+          disabled={target.simulatedTyping ?? false}
           sx={{ minWidth: 170, flexShrink: 0 }}
         >
           <MenuItem value="ctrl+v">

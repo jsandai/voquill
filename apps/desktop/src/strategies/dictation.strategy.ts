@@ -42,7 +42,6 @@ export class DictationStrategy extends BaseStrategy {
     this.streamingCurrentApp = app;
   }
 
-
   handleInterimSegment(segment: string): void {
     const state = getAppState();
 
@@ -67,7 +66,11 @@ export class DictationStrategy extends BaseStrategy {
       this.streamedProcessedText += (isFirst ? "" : " ") + text;
 
       try {
-        await invoke<void>("paste", { text: textToPaste, keybind: null, simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false });
+        await invoke<void>("paste", {
+          text: textToPaste,
+          keybind: null,
+          simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false,
+        });
       } catch (error) {
         getLogger().error(`Failed to paste interim segment: ${error}`);
       }
@@ -123,7 +126,11 @@ export class DictationStrategy extends BaseStrategy {
 
     await this.pasteQueue;
     try {
-      await invoke<void>("paste", { text: " ", keybind: null, simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false });
+      await invoke<void>("paste", {
+        text: " ",
+        keybind: null,
+        simulatedTyping: this.streamingCurrentApp?.simulatedTyping ?? false,
+      });
     } catch {
       // Non-critical trailing space
     }
