@@ -241,7 +241,7 @@ async fn handle_connection(
                 let target_info = current_target_info();
                 let target_editable = current_target_editable_status();
 
-                match paste_text_into_focused_field(&text, None) {
+                match insert_remote_text_into_focused_field(&text) {
                     Ok(()) => {
                         let delivered_at = chrono::Utc::now().to_rfc3339();
                         state.record_delivery(
@@ -346,4 +346,14 @@ async fn write_message(
         .await
         .map_err(|err| format!("Failed to finalize receiver message: {err}"))?;
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn insert_remote_text_into_focused_field(text: &str) -> Result<(), String> {
+    crate::platform::windows::input::type_text_into_focused_field(text)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn insert_remote_text_into_focused_field(text: &str) -> Result<(), String> {
+    paste_text_into_focused_field(text, None)
 }

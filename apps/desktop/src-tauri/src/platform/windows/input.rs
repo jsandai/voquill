@@ -33,13 +33,24 @@ pub(crate) fn paste_text_into_focused_field(
 
     paste_via_clipboard(target, keybind).or_else(|err| {
         log::warn!("Clipboard paste failed ({err}), falling back to simulated typing");
-        use enigo::{Enigo, KeyboardControllable};
-        let mut enigo = Enigo::new();
-        release_modifier_keys();
-        thread::sleep(Duration::from_millis(50));
-        enigo.key_sequence(target);
-        Ok(())
+        type_text_into_focused_field(target)
     })
+}
+
+pub(crate) fn type_text_into_focused_field(text: &str) -> Result<(), String> {
+    if text.trim().is_empty() {
+        return Ok(());
+    }
+
+    let override_text = env::var("VOQUILL_DEBUG_PASTE_TEXT").ok();
+    let target = override_text.as_deref().unwrap_or(text);
+
+    use enigo::{Enigo, KeyboardControllable};
+    let mut enigo = Enigo::new();
+    release_modifier_keys();
+    thread::sleep(Duration::from_millis(50));
+    enigo.key_sequence(target);
+    Ok(())
 }
 
 fn is_console_window() -> bool {
