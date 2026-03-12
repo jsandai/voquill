@@ -2,9 +2,9 @@ use std::{env, mem, thread, time::Duration};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT,
-    KEYEVENTF_KEYUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, VIRTUAL_KEY,
-    VK_CONTROL, VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_RCONTROL, VK_RMENU,
-    VK_RSHIFT, VK_RWIN, VK_SHIFT, VK_V,
+    KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT,
+    VIRTUAL_KEY, VK_CONTROL, VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_LWIN, VK_MENU, VK_RCONTROL,
+    VK_RMENU, VK_RSHIFT, VK_RWIN, VK_SHIFT, VK_V,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     GetClassNameW, GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW,
@@ -44,13 +44,7 @@ pub(crate) fn type_text_into_focused_field(text: &str) -> Result<(), String> {
 
     let override_text = env::var("VOQUILL_DEBUG_PASTE_TEXT").ok();
     let target = override_text.as_deref().unwrap_or(text);
-
-    use enigo::{Enigo, KeyboardControllable};
-    let mut enigo = Enigo::new();
-    release_modifier_keys();
-    thread::sleep(Duration::from_millis(50));
-    enigo.key_sequence(target);
-    Ok(())
+    send_unicode_string(target)
 }
 
 fn is_console_window() -> bool {
@@ -248,6 +242,50 @@ fn send_paste_keys(keybind: Option<&str>) {
         }
         send_key_up(VK_CONTROL);
     }
+}
+
+fn send_unicode_string(text: &str) -> Result<(), String> {
+    release_modifier_keys();
+    thread::sleep(Duration::from_millis(30));
+
+    for unit in text.encode_utf16() {
+        let down = INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: VIRTUAL_KEY(0),
+                    wScan: unit,
+                    dwFlags: KEYEVENTF_UNICODE,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
+        };
+        let up = INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: VIRTUAL_KEY(0),
+                    wScan: unit,
+                    dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
+        };
+        let sent = unsafe { SendInput(&[down, up], mem::size_of::<INPUT>() as i32) };
+        if sent != 2 {
+            return Err(format!("failed to send unicode input for unit {unit}"));
+        }
+
+        let delay_ms = match char::from_u32(unit as u32) {
+            Some(' ') | Some('.') | Some(',') | Some('!') | Some('?') => 85,
+            _ => 55,
+        };
+        thread::sleep(Duration::from_millis(delay_ms));
+    }
+
+    Ok(())
 }
 
 fn paste_via_clipboard(text: &str, keybind: Option<&str>) -> Result<(), String> {

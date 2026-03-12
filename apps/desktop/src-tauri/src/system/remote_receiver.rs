@@ -6,7 +6,6 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::watch;
 
-use crate::platform::input::paste_text_into_focused_field;
 use crate::state::{RemoteReceiverState, RemoteReceiverStatus};
 
 #[derive(Debug, Deserialize)]
@@ -355,5 +354,5 @@ fn insert_remote_text_into_focused_field(text: &str) -> Result<(), String> {
 
 #[cfg(not(target_os = "windows"))]
 fn insert_remote_text_into_focused_field(text: &str) -> Result<(), String> {
-    paste_text_into_focused_field(text, None)
+    crate::platform::input::paste_text_into_focused_field(text, None)
 }
